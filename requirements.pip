@@ -1,0 +1,6 @@
+django
+requests
+batbelt
+django-celery
+chaussette
+ipython
