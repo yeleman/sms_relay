@@ -1,0 +1,39 @@
+.controls ul {
+	margin: 0 0 10px 0;
+	list-style-type: none;
+}
+
+table tr .total{
+font-weight: bold;
+
+}
+
+table tr .ident{
+     text-indent: 3em;
+}
+
+.table-info tr td:last-of-type {
+    text-align: center;
+}
+
+.sponsors {
+	padding-bottom: 1em;
+	text-align: center;
+}
+
+.sponsors a {
+	padding-left: .5em;
+	padding-right: .5em;
+}
+
+.sponsors a:first-of-type {
+	padding-left: 0;
+}
+
+.sponsors a:last-of-type {
+	padding-right: 0;
+}
+
+.status ul {
+	list-style-position: inside;
+}

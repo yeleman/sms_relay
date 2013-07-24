@@ -9,6 +9,7 @@ import datetime
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.conf import settings
 
 from sms_relay.models import IncomingSMS
@@ -70,3 +71,15 @@ def smssync(request):
     queue_sms_forward.apply_async([sms])
 
     return http_response(processed)
+
+
+def dashboard(request):
+    return render(request, "dashboard.html", {'page': 'dashboard'})
+
+
+def list_incomingsms(request, number=None):
+
+    data_incomingsms = {'incomingsms': [sms.to_dict()
+                        for sms in IncomingSMS.objects.order_by('-received_on').all()[:number]]}
+
+    return HttpResponse(json.dumps(data_incomingsms), mimetype='application/json')

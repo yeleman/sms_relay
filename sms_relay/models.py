@@ -7,6 +7,8 @@ from __future__ import (unicode_literals, absolute_import,
 
 from django.db import models
 
+DATE_FMT = u'%A %d %B %Y %Hh:%Mmn'
+
 
 class IncomingSMS(models.Model):
 
@@ -32,3 +34,8 @@ class IncomingSMS(models.Model):
 
     def __unicode__(self):
         return self.text
+
+    def to_dict(self):
+        return {'identity': self.identity, 'text': self.text,
+                'status': self.status,
+                'received_on': self.received_on.strftime(DATE_FMT)}
