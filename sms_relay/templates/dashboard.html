@@ -1,8 +1,22 @@
 {% extends "base.html" %}
-
 {% block content %}
 <div class="container-fluid">
     <h1>SMS Relay</h1>
+        <div class="row-fluid">
+           <table class="table table-hover table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>SMS</th>
+                        <th>Nombre</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><th class='td-link'>Non envoyé</th><td>{{nb_notsent}}</td></tr>
+                    <tr><th class='td-link'>Envoyé</th><td>{{nb_sentok}}</td></tr>
+                    <tr><th class='td-link'>Erreur d'envoi</th><td>{{nb_senterr}}</td></tr>
+                </tbody>
+            </table>
+        </div>
     <legend>Sms recents</legend>
     <div class="row-fluid">
             <form id="filter_nb">{% csrf_token %}
@@ -26,24 +40,56 @@
                 </tbody>
             </table>
     </div>
+
+<div id="container" style="min-width: 400px; height: 400px; margin: 0 auto"></div>
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
-     $("#number").click(function () {
-        var number = $("#input_id").val();
-        $.getJSON('/incomingsms/' + number, function(data) {
-            $("#incomingsms_table").empty();
-            $.each(data.incomingsms, function(num, incomingsms) {
-                row = "<tr>" +
-                      "<td class='td-link'><i class='icon-envelope'></i> " + incomingsms.received_on + "</td>" +
-                      "<td class='td-link'>" + incomingsms.identity + "</td>" +
-                      "<td {class='td-link'}>" + incomingsms.status + "</td>" +
-                      "<td class='td-link'>" + incomingsms.text + "</td>" +
-                      "</tr>";
-                $("#incomingsms_table").append(row);
-            });
+
+ $("#number").click(function () {
+    var number = $("#input_id").val();
+    $.getJSON('/incomingsms/' + number, function(data) {
+        $("#incomingsms_table").empty();
+        $.each(data.incomingsms, function(num, incomingsms) {
+            row = "<tr>" +
+                  "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.received_on + "</td>" +
+                  "<td class='td-link'>" + incomingsms.identity + "</td>" +
+                  "<td {class='td-link'}>" + incomingsms.status + "</td>" +
+                  "<td class='td-link'>" + incomingsms.text + "</td>" +
+                  "</tr>";
+            $("#incomingsms_table").append(row);
         });
-    })
+    });
+});
+$(function () {
+    $.getJSON('/graph_data/', function(data) {
+        $('#container').highcharts({
+            chart: { type: 'line',
+            },
+            title: { text: 'Nombre de SMS par jour',
+                x: -20 //center
+            },
+            subtitle: {
+                text: null,
+                x: -20
+            },
+            xAxis: { type: 'datetime',
+            },
+            yAxis: {
+                title: { text: "SMS"
+                },
+            },
+            tooltip: { valueSuffix: null,
+            },
+            legend: {},
+            series: [{
+                name: 'Nombre de SMS',
+                data: data.nb_incomingsms
+            },]
+        });
+    });
+});
+
 {% endblock %}

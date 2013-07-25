@@ -11,9 +11,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.conf import settings
+from batbelt import to_timestamp
 
 from sms_relay.models import IncomingSMS
-from sms_relay.utils import is_valid_number
+from sms_relay.utils import is_valid_number, datetime_range
 from sms_relay.tasks import queue_sms_forward
 
 
@@ -74,7 +75,15 @@ def smssync(request):
 
 
 def dashboard(request):
-    return render(request, "dashboard.html", {'page': 'dashboard'})
+    context = {'page': 'dashboard'}
+
+    nb_notsent = IncomingSMS.objects.filter(status=IncomingSMS.STATUS_NOTSENT).count()
+    nb_sentok = IncomingSMS.objects.filter(status=IncomingSMS.STATUS_SENTOK).count()
+    nb_senterr = IncomingSMS.objects.filter(status=IncomingSMS.STATUS_ERROR).count()
+    context.update({"nb_notsent": nb_notsent,
+                    "nb_sentok": nb_sentok,
+                    "nb_senterr": nb_senterr})
+    return render(request, "dashboard.html", context)
 
 
 def list_incomingsms(request, number=None):
@@ -83,3 +92,29 @@ def list_incomingsms(request, number=None):
                         for sms in IncomingSMS.objects.order_by('-received_on').all()[:number]]}
 
     return HttpResponse(json.dumps(data_incomingsms), mimetype='application/json')
+
+
+def get_graph_context():
+    date_start_end = lambda d, s=True: \
+        datetime.datetime(int(d.year), int(d.month), int(d.day),
+                          0 if s else 23, 0 if s else 59, 0 if s else 59)
+
+    try:
+        start = IncomingSMS.objects.order_by('received_on')[0].received_on
+    except IndexError:
+        start = datetime.datetime.today()
+
+    nb_incomingsms = []
+    for date in datetime_range(start):
+        ts = int(to_timestamp(date)) * 1000
+        smscount = IncomingSMS.objects.filter(received_on__gte=date_start_end(date),
+                                              received_on__lt=date_start_end(date, False)).count()
+        nb_incomingsms.append((ts, smscount))
+    data_event = {'nb_incomingsms': nb_incomingsms}
+    return data_event
+
+
+def graph_data(request):
+    ''' Return graph data in json '''
+
+    return HttpResponse(json.dumps(get_graph_context()), mimetype='application/json')

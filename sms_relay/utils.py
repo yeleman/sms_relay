@@ -5,6 +5,7 @@
 from __future__ import (unicode_literals, absolute_import,
                         division, print_function)
 
+import datetime
 import requests
 from django.conf import settings
 
@@ -67,3 +68,20 @@ def clear_pending_messages():
         queue_sms_forward.apply_async([sms])
 
     return True
+
+
+def datetime_range(start, stop=None, days=1):
+    ''' return a list of dates incremented by 'days'
+
+        start/stop = date or datetime
+        days = increment number of days '''
+
+    # stop at 00h00 today so we don't have an extra
+    # point for today if the last period ends today.
+    stop = stop or datetime.datetime(*datetime.date.today().timetuple()[:-4])
+
+    while(start < stop):
+        yield start
+        start += datetime.timedelta(days)
+
+    yield stop
