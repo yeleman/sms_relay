@@ -22,6 +22,15 @@ class OutgoingManager(models.Manager):
         return super(OutgoingManager, self).get_query_set().filter(direction=TextSMS.OUTGOING)
 
 
+class OutgoingToSend(models.Manager):
+
+    def get_query_set(self):
+        return super(OutgoingToSend, self).get_query_set() \
+                                         .filter(status__in=(TextSMS.STATUS_NOTSENT,
+                                                             TextSMS.STATUS_ERROR),
+                                                 direction=TextSMS.OUTGOING)
+
+
 class TextSMS(models.Model):
 
     STATUS_NOTSENT = 'not_sent'
@@ -57,6 +66,7 @@ class TextSMS(models.Model):
     objects = models.Manager()
     incoming = IncomingManager()
     outgoing = OutgoingManager()
+    tosend = OutgoingToSend()
 
     def __unicode__(self):
         return self.text

@@ -11,7 +11,7 @@ from sms_relay.models import TextSMS
 
 
 class CustomTextSMS(admin.ModelAdmin):
-    list_display = ("event_on", "incoming", "identity", "text", "status")
+    list_display = ("event_on", "direction", "identity", "text", "status")
     list_filter = ("event_on", "status", "direction")
 
 admin.site.register(TextSMS, CustomTextSMS)

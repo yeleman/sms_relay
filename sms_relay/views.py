@@ -25,9 +25,22 @@ def home(request):
 @csrf_exempt
 def smssync(request):
 
-    def http_response(is_processed):
+    def http_response(is_processed, with_outgoing=False):
         response = {'payload': {'success': bool(is_processed)}}
+
+        if TextSMS.tosend.count() and with_outgoing:
+            response['payload'].update({'task': 'send',
+                                        'secret': settings.USHAHIDI_SECRET,
+                                        'messages': []})
+            for outgoing_msg in TextSMS.tosend.order_by('event_on')[:settings.MAX_OUTOING_MESSAGES]:
+                response['payload']['messages'].append({'to': outgoing_msg.identity, 'message': outgoing_msg.text})
+                outgoing_msg.status = outgoing_msg.STATUS_SENTOK
+                outgoing_msg.save()
+
         return HttpResponse(json.dumps(response), mimetype='application/json')
+
+    if request.method == 'GET' and request.GET.get('task') == 'send':
+        return http_response(True, with_outgoing=True)
 
     if not request.method == 'POST':
         return http_response(True)
@@ -53,7 +66,7 @@ def smssync(request):
         existing = None
 
     if existing:
-        return http_response(True)
+        return http_response(True, with_outgoing=True)
 
     try:
         sms = TextSMS.objects.create(
@@ -67,7 +80,7 @@ def smssync(request):
 
     queue_sms_forward.apply_async([sms])
 
-    return http_response(processed)
+    return http_response(processed, with_outgoing=True)
 
 
 def dashboard(request):
