@@ -48,7 +48,7 @@ def smssync(request):
 
     try:
         existing = TextSMS.incoming.get(identity=identity,
-                                           event_on=event_on)
+                                        event_on=event_on)
     except TextSMS.DoesNotExist:
         existing = None
 
@@ -104,7 +104,7 @@ def get_graph_context():
     for date in datetime_range(start):
         ts = int(to_timestamp(date)) * 1000
         smscount = TextSMS.incoming.filter(event_on__gte=date_start_end(date),
-                                              event_on__lt=date_start_end(date, False)).count()
+                                           event_on__lt=date_start_end(date, False)).count()
         nb_incomingsms.append((ts, smscount))
     data_event = {'nb_incomingsms': nb_incomingsms}
     return data_event
