@@ -9,7 +9,7 @@ import datetime
 import requests
 from django.conf import settings
 
-from sms_relay.models import IncomingSMS
+from sms_relay.models import TextSMS
 
 NB_CHARS_VALID_NUMBER = 8
 
@@ -32,7 +32,7 @@ def forward_sms(sms):
     url = settings.SOUKTEL_URL
     params = {"api_id": settings.SOUKTEL_API_ID,
               "key": settings.SOUKTEL_KEY,
-              "sc": cl(sms.destination),
+              "sc": cl(sms.sim_number),
               "msg": sms.text,
               "from": cl(sms.identity)}
     req = requests.get(url, params=params)
@@ -44,18 +44,26 @@ def forward_sms(sms):
         sms.status = sms.STATSUS_ERROR
     sms.save()
 
+    # add reply to outgoing list
+    if req.text:
+        TextSMS.objects.create(direction=TextSMS.OUTGOING,
+                               identity=sms.identity,
+                               event_on=datetime.datetime.now(),
+                               text=req.text,
+                               sim_number=settings.SIM_NUMBER)
+
     return sms.status == sms.STATUS_SENTOK
 
 
 def is_connection_ok():
     try:
-        req = requests.get(settings.SOUKTEL_URL)
+        req = requests.get(settings.SOUKTEL_TEST_URL)
         req.raise_for_status()
     except (requests.exceptions.HTTPError,
             requests.exceptions.ConnectionError):
         return False
 
-    return req.text == "1"
+    return bool(req.text)
 
 
 def clear_pending_messages():
@@ -64,7 +72,7 @@ def clear_pending_messages():
     if not is_connection_ok():
         return False
 
-    for sms in IncomingSMS.objects.filter(status__in=IncomingSMS.PENDING_STATUSES):
+    for sms in TextSMS.incoming.filter(status__in=TextSMS.PENDING_STATUSES):
         queue_sms_forward.apply_async([sms])
 
     return True

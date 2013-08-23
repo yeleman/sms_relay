@@ -13,7 +13,7 @@ from django.shortcuts import render
 from django.conf import settings
 from batbelt import to_timestamp
 
-from sms_relay.models import IncomingSMS
+from sms_relay.models import TextSMS
 from sms_relay.utils import is_valid_number, datetime_range
 from sms_relay.tasks import queue_sms_forward
 
@@ -36,35 +36,31 @@ def smssync(request):
 
     sent_timestamp = request.POST.get('sent_timestamp')
     try:
-        received_on = datetime.datetime.fromtimestamp(int(sent_timestamp) / 1000)
+        event_on = datetime.datetime.fromtimestamp(int(sent_timestamp) / 1000)
     except (TypeError, ValueError):
-        received_on = None
+        event_on = None
     identity = request.POST.get('from')
     message = request.POST.get('message')
-
-    print(identity)
 
     # skip SPAM
     if not is_valid_number(identity):
         return http_response(True)
-    print(is_valid_number(identity))
-    print("VALID")
 
     try:
-        existing = IncomingSMS.objects.get(identity=identity,
-                                           received_on=received_on)
-    except IncomingSMS.DoesNotExist:
+        existing = TextSMS.incoming.get(identity=identity,
+                                           event_on=event_on)
+    except TextSMS.DoesNotExist:
         existing = None
 
     if existing:
         return http_response(True)
 
     try:
-        sms = IncomingSMS.objects.create(
+        sms = TextSMS.objects.create(
             identity=identity,
-            received_on=received_on,
+            event_on=event_on,
             text=message,
-            destination=settings.MALITEL_NUMBER)
+            sim_number=settings.SIM_NUMBER)
         processed = True
     except:
         return http_response(False)
@@ -77,9 +73,9 @@ def smssync(request):
 def dashboard(request):
     context = {'page': 'dashboard'}
 
-    nb_notsent = IncomingSMS.objects.filter(status=IncomingSMS.STATUS_NOTSENT).count()
-    nb_sentok = IncomingSMS.objects.filter(status=IncomingSMS.STATUS_SENTOK).count()
-    nb_senterr = IncomingSMS.objects.filter(status=IncomingSMS.STATUS_ERROR).count()
+    nb_notsent = TextSMS.incoming.filter(status=TextSMS.STATUS_NOTSENT).count()
+    nb_sentok = TextSMS.incoming.filter(status=TextSMS.STATUS_SENTOK).count()
+    nb_senterr = TextSMS.incoming.filter(status=TextSMS.STATUS_ERROR).count()
     context.update({"nb_notsent": nb_notsent,
                     "nb_sentok": nb_sentok,
                     "nb_senterr": nb_senterr})
@@ -89,7 +85,7 @@ def dashboard(request):
 def list_incomingsms(request, number=None):
 
     data_incomingsms = {'incomingsms': [sms.to_dict()
-                        for sms in IncomingSMS.objects.order_by('-received_on').all()[:number]]}
+                        for sms in TextSMS.incoming.order_by('-event_on').all()[:number]]}
 
     return HttpResponse(json.dumps(data_incomingsms), mimetype='application/json')
 
@@ -100,15 +96,15 @@ def get_graph_context():
                           0 if s else 23, 0 if s else 59, 0 if s else 59)
 
     try:
-        start = IncomingSMS.objects.order_by('received_on')[0].received_on
+        start = TextSMS.incoming.order_by('event_on')[0].event_on
     except IndexError:
         start = datetime.datetime.today()
 
     nb_incomingsms = []
     for date in datetime_range(start):
         ts = int(to_timestamp(date)) * 1000
-        smscount = IncomingSMS.objects.filter(received_on__gte=date_start_end(date),
-                                              received_on__lt=date_start_end(date, False)).count()
+        smscount = TextSMS.incoming.filter(event_on__gte=date_start_end(date),
+                                              event_on__lt=date_start_end(date, False)).count()
         nb_incomingsms.append((ts, smscount))
     data_event = {'nb_incomingsms': nb_incomingsms}
     return data_event

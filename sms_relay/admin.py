@@ -7,11 +7,11 @@ from __future__ import (unicode_literals, absolute_import,
 
 from django.contrib import admin
 
-from sms_relay.models import IncomingSMS
+from sms_relay.models import TextSMS
 
 
-class CustomIncomingSMS(admin.ModelAdmin):
-    list_display = ("received_on", "identity", "text", "status")
-    list_filter = ("received_on", "status")
+class CustomTextSMS(admin.ModelAdmin):
+    list_display = ("event_on", "incoming", "identity", "text", "status")
+    list_filter = ("event_on", "status", "direction")
 
-admin.site.register(IncomingSMS, CustomIncomingSMS)
+admin.site.register(TextSMS, CustomTextSMS)
