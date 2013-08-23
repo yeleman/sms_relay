@@ -73,6 +73,7 @@ def smssync(request):
             identity=identity,
             event_on=event_on,
             text=message,
+            direction=TextSMS.INCOMING,
             sim_number=settings.SIM_NUMBER)
         processed = True
     except:

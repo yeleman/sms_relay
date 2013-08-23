@@ -52,7 +52,7 @@ function get_incomingsms() {
         $("#incomingsms_table").empty();
         $.each(data.incomingsms, function(num, incomingsms) {
             row = "<tr>" +
-                  "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.received_on + "</td>" +
+                  "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.event_on + "</td>" +
                   "<td class='td-link'>" + incomingsms.identity + "</td>" +
                   "<td {class='td-link'}>" + incomingsms.status + "</td>" +
                   "<td class='td-link'>" + incomingsms.text + "</td>" +
