@@ -4,7 +4,7 @@
 
 from __future__ import (unicode_literals, absolute_import,
                         division, print_function)
-
+import urllib2
 import datetime
 import requests
 from django.conf import settings
@@ -12,6 +12,10 @@ from django.conf import settings
 from sms_relay.models import TextSMS
 
 NB_CHARS_VALID_NUMBER = 8
+
+
+def unquote_url(url):
+    return urllib2.unquote(url).replace("+", " ")
 
 
 def is_valid_number(number):
@@ -49,7 +53,7 @@ def forward_sms(sms):
         TextSMS.objects.create(direction=TextSMS.OUTGOING,
                                identity=sms.identity,
                                event_on=datetime.datetime.now(),
-                               text=req.text,
+                               text=unquote_url(req.text),
                                sim_number=settings.SIM_NUMBER)
 
     return sms.status == sms.STATUS_SENTOK
