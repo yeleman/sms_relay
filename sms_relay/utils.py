@@ -59,6 +59,7 @@ def is_connection_ok():
     try:
         req = requests.get(settings.SOUKTEL_TEST_URL)
         req.raise_for_status()
+        return True  # we are using /sms/ as test URL which is blank
     except (requests.exceptions.HTTPError,
             requests.exceptions.ConnectionError):
         return False
