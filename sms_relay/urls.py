@@ -9,6 +9,6 @@ urlpatterns = patterns(
     url(r'^smssync$', 'sms_relay.views.smssync', name='smssync'),
 
     url(r'^graph_data/$', 'sms_relay.views.graph_data', name='graph_data'),
-    url(r'^incomingsms/(?P<number>\d+)/$', 'sms_relay.views.list_incomingsms', name='incomingsms'),
+    url(r'^in_out_sms/(?P<number>\d+)/$', 'sms_relay.views.list_incomingsms', name='incomingsms'),
     url(r'^admin/', include(admin.site.urls)),
 )
