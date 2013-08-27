@@ -73,24 +73,35 @@ function get_incomingsms() {
     $.getJSON('/in_out_sms/' + number, function(data) {
         $("#incomingsms_table").empty();
         $("#outgoingsms_table").empty();
-        $.each(data.incomingsms, function(num, incomingsms) {
-            row = "<tr>" +
-                  "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.event_on + "</td>" +
-                  "<td class='td-link'>" + incomingsms.identity + "</td>" +
-                  "<td {class='td-link'}>" + incomingsms.status + "</td>" +
-                  "<td class='td-link'>" + incomingsms.text + "</td>" +
-                  "</tr>";
-            $("#incomingsms_table").append(row);
-        });
-        $.each(data.outgoingsms, function(num, outgoingsms) {
-            row = "<tr>" +
-                  "<td class='td-link'><i class='icon-envelope'></i>  " + outgoingsms.event_on + "</td>" +
-                  "<td class='td-link'>" + outgoingsms.identity + "</td>" +
-                  "<td {class='td-link'}>" + outgoingsms.status + "</td>" +
-                  "<td class='td-link'>" + outgoingsms.text + "</td>" +
-                  "</tr>";
-            $("#outgoingsms_table").append(row);
-        });
+
+
+        if (data.incomingsms == "") {
+            $("#incomingsms_table").append("<tr><td COLSPAN='4'>" + "No incoming SMS" + "</td></tr>");
+        } else{
+            $.each(data.incomingsms, function(num, incomingsms) {
+                row = "<tr>" +
+                      "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.event_on + "</td>" +
+                      "<td class='td-link'>" + incomingsms.identity + "</td>" +
+                      "<td {class='td-link'}>" + incomingsms.status + "</td>" +
+                      "<td class='td-link'>" + incomingsms.text + "</td>" +
+                      "</tr>";
+                $("#incomingsms_table").append(row);
+            });
+        }
+
+        if (data.outgoingsms == "") {
+            $("#outgoingsms_table").append("<tr><td COLSPAN='4'>" + "No outgoing SMS" + "</td></tr>");
+        } else{
+            $.each(data.outgoingsms, function(num, outgoingsms) {
+                row = "<tr>" +
+                      "<td class='td-link'><i class='icon-envelope'></i>  " + outgoingsms.event_on + "</td>" +
+                      "<td class='td-link'>" + outgoingsms.identity + "</td>" +
+                      "<td {class='td-link'}>" + outgoingsms.status + "</td>" +
+                      "<td class='td-link'>" + outgoingsms.text + "</td>" +
+                      "</tr>";
+                $("#outgoingsms_table").append(row);
+            });
+        }
     });
 };
 
@@ -125,12 +136,12 @@ $(function () {
             tooltip: { valueSuffix: null,
             },
             legend: {},
-            series: [{
-                name: 'Nombre de SMS incoming',
-                data: data.nb_incomingsms,
-            },
-            {name: 'Nombre de SMS outgoingsms',
-             data: data.nb_outgoingsms,}]
+            series: [
+                {name: 'Nombre de SMS incoming',
+                 data: data.nb_incomingsms,},
+                {name: 'Nombre de SMS outgoing',
+                 data: data.nb_outgoingsms,}
+            ]
         });
     });
 });
