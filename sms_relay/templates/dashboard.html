@@ -6,14 +6,19 @@
            <table class="table table-hover table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th>SMS</th>
+                        <th COLSPAN="2">SMS</th>
                         <th>Nombre</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><th class='td-link'>Non envoyé</th><td>{{nb_notsent}}</td></tr>
-                    <tr><th class='td-link'>Envoyé</th><td>{{nb_sentok}}</td></tr>
-                    <tr><th class='td-link'>Erreur d'envoi</th><td>{{nb_senterr}}</td></tr>
+                    <tr><th ROWSPAN="4"> Incoming</th></tr>
+                    <tr><th class='td-link'>Non envoyé</th><td>{{nb_inc_notsent}}</td></tr>
+                    <tr><th class='td-link'>Envoyé</th><td>{{nb_inc_sentok}}</td></tr>
+                    <tr><th class='td-link'>Erreur d'envoi</th><td>{{nb_inc_senterr}}</td></tr>
+                    <tr><th ROWSPAN="4"> Outgoing</th></tr>
+                    <tr><th class='td-link'>Non envoyé</th><td>{{nb_out_notsent}}</td></tr>
+                    <tr><th class='td-link'>Envoyé</th><td>{{nb_out_sentok}}</td></tr>
+                    <tr><th class='td-link'>Erreur d'envoi</th><td>{{nb_out_senterr}}</td></tr>
                 </tbody>
             </table>
         </div>
@@ -25,6 +30,7 @@
     </div>
     <div class="row-fluid">
            <table class="table table-hover table-bordered table-striped">
+            <h4>Incoming SMS</h4>
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -34,6 +40,22 @@
                     </tr>
                 </thead>
                 <tbody id=incomingsms_table>
+                    <td class='td-link' colspan="4">Saisie le nombre de SMS à afficher</td>
+                </tbody>
+            </table>
+    </div>
+    <div class="row-fluid">
+           <table class="table table-hover table-bordered table-striped">
+            <h4>Outgoing SMS</h4>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Numéro</th>
+                        <th>Status</th>
+                        <th>Texte</th>
+                    </tr>
+                </thead>
+                <tbody id=outgoingsms_table>
                     <td class='td-link' colspan="4">Saisie le nombre de SMS à afficher</td>
                 </tbody>
             </table>
@@ -48,17 +70,38 @@
 
 function get_incomingsms() {
     var number = $("#input_id").val();
-    $.getJSON('/incomingsms/' + number, function(data) {
+    $.getJSON('/in_out_sms/' + number, function(data) {
         $("#incomingsms_table").empty();
-        $.each(data.incomingsms, function(num, incomingsms) {
-            row = "<tr>" +
-                  "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.event_on + "</td>" +
-                  "<td class='td-link'>" + incomingsms.identity + "</td>" +
-                  "<td {class='td-link'}>" + incomingsms.status + "</td>" +
-                  "<td class='td-link'>" + incomingsms.text + "</td>" +
-                  "</tr>";
-            $("#incomingsms_table").append(row);
-        });
+        $("#outgoingsms_table").empty();
+
+
+        if (data.incomingsms == "") {
+            $("#incomingsms_table").append("<tr><td COLSPAN='4'>" + "No incoming SMS" + "</td></tr>");
+        } else{
+            $.each(data.incomingsms, function(num, incomingsms) {
+                row = "<tr>" +
+                      "<td class='td-link'><i class='icon-envelope'></i>  " + incomingsms.event_on + "</td>" +
+                      "<td class='td-link'>" + incomingsms.identity + "</td>" +
+                      "<td {class='td-link'}>" + incomingsms.status + "</td>" +
+                      "<td class='td-link'>" + incomingsms.text + "</td>" +
+                      "</tr>";
+                $("#incomingsms_table").append(row);
+            });
+        }
+
+        if (data.outgoingsms == "") {
+            $("#outgoingsms_table").append("<tr><td COLSPAN='4'>" + "No outgoing SMS" + "</td></tr>");
+        } else{
+            $.each(data.outgoingsms, function(num, outgoingsms) {
+                row = "<tr>" +
+                      "<td class='td-link'><i class='icon-envelope'></i>  " + outgoingsms.event_on + "</td>" +
+                      "<td class='td-link'>" + outgoingsms.identity + "</td>" +
+                      "<td {class='td-link'}>" + outgoingsms.status + "</td>" +
+                      "<td class='td-link'>" + outgoingsms.text + "</td>" +
+                      "</tr>";
+                $("#outgoingsms_table").append(row);
+            });
+        }
     });
 };
 
@@ -93,10 +136,12 @@ $(function () {
             tooltip: { valueSuffix: null,
             },
             legend: {},
-            series: [{
-                name: 'Nombre de SMS',
-                data: data.nb_incomingsms
-            },]
+            series: [
+                {name: 'Nombre de SMS incoming',
+                 data: data.nb_incomingsms,},
+                {name: 'Nombre de SMS outgoing',
+                 data: data.nb_outgoingsms,}
+            ]
         });
     });
 });

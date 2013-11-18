@@ -87,21 +87,33 @@ def smssync(request):
 def dashboard(request):
     context = {'page': 'dashboard'}
 
-    nb_notsent = TextSMS.incoming.filter(status=TextSMS.STATUS_NOTSENT).count()
-    nb_sentok = TextSMS.incoming.filter(status=TextSMS.STATUS_SENTOK).count()
-    nb_senterr = TextSMS.incoming.filter(status=TextSMS.STATUS_ERROR).count()
-    context.update({"nb_notsent": nb_notsent,
-                    "nb_sentok": nb_sentok,
-                    "nb_senterr": nb_senterr})
+    nb_inc_notsent = TextSMS.incoming.filter(status=TextSMS.STATUS_NOTSENT).count()
+    nb_inc_sentok = TextSMS.incoming.filter(status=TextSMS.STATUS_SENTOK).count()
+    nb_inc_senterr = TextSMS.incoming.filter(status=TextSMS.STATUS_ERROR).count()
+
+    nb_out_notsent = TextSMS.outgoing.filter(status=TextSMS.STATUS_NOTSENT).count()
+    nb_out_sentok = TextSMS.outgoing.filter(status=TextSMS.STATUS_SENTOK).count()
+    nb_out_senterr = TextSMS.outgoing.filter(status=TextSMS.STATUS_ERROR).count()
+
+    context.update({"nb_inc_notsent": nb_inc_notsent,
+                    "nb_inc_sentok": nb_inc_sentok,
+                    "nb_inc_senterr": nb_inc_senterr,
+                    "nb_out_notsent": nb_out_notsent,
+                    "nb_out_sentok": nb_out_sentok,
+                    "nb_out_senterr": nb_out_senterr
+                    })
     return render(request, "dashboard.html", context)
 
 
 def list_incomingsms(request, number=None):
 
-    data_incomingsms = {'incomingsms': [sms.to_dict()
-                        for sms in TextSMS.incoming.order_by('-event_on').all()[:number]]}
+    data_sms = {'incomingsms': [sms.to_dict()
+                        for sms in TextSMS.incoming.order_by('-event_on').all()[:number]],
+                'outgoingsms': [sms.to_dict()
+                        for sms in TextSMS.outgoing.order_by('-event_on').all()[:number]],
+                }
 
-    return HttpResponse(json.dumps(data_incomingsms), mimetype='application/json')
+    return HttpResponse(json.dumps(data_sms), mimetype='application/json')
 
 
 def get_graph_context():
@@ -115,12 +127,16 @@ def get_graph_context():
         start = datetime.datetime.today()
 
     nb_incomingsms = []
+    nb_outgoingsms = []
     for date in datetime_range(start):
         ts = int(to_timestamp(date)) * 1000
-        smscount = TextSMS.incoming.filter(event_on__gte=date_start_end(date),
+        sms_in_count = TextSMS.incoming.filter(event_on__gte=date_start_end(date),
                                            event_on__lt=date_start_end(date, False)).count()
-        nb_incomingsms.append((ts, smscount))
-    data_event = {'nb_incomingsms': nb_incomingsms}
+        nb_incomingsms.append((ts, sms_in_count))
+        sms_out_count = TextSMS.outgoing.filter(event_on__gte=date_start_end(date),
+                                           event_on__lt=date_start_end(date, False)).count()
+        nb_outgoingsms.append((ts, sms_out_count))
+    data_event = {'nb_incomingsms': nb_incomingsms, 'nb_outgoingsms': nb_outgoingsms}
     return data_event
 
 
