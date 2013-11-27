@@ -5,15 +5,17 @@
 from __future__ import (unicode_literals, absolute_import,
                         division, print_function)
 import random
+import json
 
 from django.conf import settings
+from django.http import HttpResponse
 from fondasms.utils import datetime_from_timestamp
 
 from sms_relay.utils import (normalized_phonenumber,
                              is_valid_number,
                              operator_from_malinumber)
 from sms_relay.models import TextSMS
-from sms_relay.tasks import queue_sms_forward
+from sms_relay.tasks import queue_sms_forward, pop_pending_replies
 
 
 class UnableToCreateHotlineRequest(Exception):
@@ -44,6 +46,11 @@ def handle_incoming_call(payload):
     # on call received
     return handle_sms_call(payload, event_type='call')
 
+
+def handle_outgoing_request(payload):
+    return build_response_with(
+            pop_pending_replies(),
+            phone_number=payload.get('from').strip() or None)
 
 def handle_sms_call(payload, event_type=None):
 
@@ -81,9 +88,22 @@ def handle_sms_call(payload, event_type=None):
     except:
         return
 
-    print("created")
-
     queue_sms_forward.apply_async([sms])
+
+    return build_response_with(
+            pop_pending_replies(),
+            phone_number=payload.get('from').strip() or None)
+
+
+def build_response_with(events=[], phone_number=None):
+    response = {'events': [],
+                'phone_number': phone_number}
+    if len(events):
+        if not len(response['events']):
+            response['events'].append({'event': 'send', 'messages': []})
+        response['events'][0]['messages'] += events
+    return HttpResponse(json.dumps(response),
+                        mimetype='application/json')
 
 
 def handle_outgoing_status_change(payload):

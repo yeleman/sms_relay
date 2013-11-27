@@ -62,6 +62,16 @@ def forward_sms(sms):
     return sms.status == sms.STATUS_SENTOK
 
 
+def pop_pending_replies(limit=30):
+    replies = []
+    for reply in TextSMS.objects.filter(direction=TextSMS.OUTGOING,
+                                        status=TextSMS.STATUS_NOTSENT):
+        replies.append({"to": reply.identity, "message": reply.text})
+        reply.status = TextSMS.STATUS_SENTOK
+        reply.save()
+    return replies
+
+
 def is_connection_ok():
     try:
         req = requests.get(settings.SOUKTEL_TEST_URL)
