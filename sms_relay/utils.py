@@ -65,7 +65,7 @@ def forward_sms(sms):
 def pop_pending_replies(limit=30):
     replies = []
     for reply in TextSMS.objects.filter(direction=TextSMS.OUTGOING,
-                                        status=TextSMS.STATUS_NOTSENT):
+                                        status=TextSMS.STATUS_NOTSENT)[:limit]:
         replies.append({"to": reply.identity, "message": reply.text})
         reply.status = TextSMS.STATUS_SENTOK
         reply.save()

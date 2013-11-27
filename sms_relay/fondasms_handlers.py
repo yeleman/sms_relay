@@ -48,9 +48,8 @@ def handle_incoming_call(payload):
 
 
 def handle_outgoing_request(payload):
-    return build_response_with(
-            pop_pending_replies(),
-            phone_number=payload.get('from').strip() or None)
+    return pop_pending_replies()
+
 
 def handle_sms_call(payload, event_type=None):
 
@@ -90,9 +89,7 @@ def handle_sms_call(payload, event_type=None):
 
     queue_sms_forward.apply_async([sms])
 
-    return build_response_with(
-            pop_pending_replies(),
-            phone_number=payload.get('from').strip() or None)
+    return pop_pending_replies()
 
 
 def build_response_with(events=[], phone_number=None):
