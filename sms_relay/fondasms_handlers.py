@@ -13,9 +13,10 @@ from fondasms.utils import datetime_from_timestamp
 
 from sms_relay.utils import (normalized_phonenumber,
                              is_valid_number,
-                             operator_from_malinumber)
+                             operator_from_malinumber,
+                             pop_pending_replies)
 from sms_relay.models import TextSMS
-from sms_relay.tasks import queue_sms_forward, pop_pending_replies
+from sms_relay.tasks import queue_sms_forward
 
 
 class UnableToCreateHotlineRequest(Exception):
