@@ -55,6 +55,8 @@ def handle_outgoing_request(payload):
 def handle_sms_call(payload, event_type=None):
 
     phone_number = normalized_phonenumber(payload.get('from').strip())
+    sim_number = normalized_phonenumber(
+        payload.get('phone_number', settings.SIM_NUMBER).strip())
     if not is_valid_number(phone_number):
         return
 
@@ -84,7 +86,7 @@ def handle_sms_call(payload, event_type=None):
             event_on=received_on,
             text=message,
             direction=TextSMS.INCOMING,
-            sim_number=settings.SIM_NUMBER)
+            sim_number=sim_number)
     except:
         return
 
